@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {searchWeb} from '@/services/web-search';
 
 const GenerateKeyTakeawaysInputSchema = z.object({
   question: z.string().describe('The research question being asked.'),
@@ -26,10 +27,6 @@ const GenerateKeyTakeawaysInputSchema = z.object({
       })
     )
     .describe('A list of research documents to analyze.'),
-  webSources: z
-    .array(z.string())
-    .optional()
-    .describe('A list of URLs of web sources to analyze.'),
 });
 
 export type GenerateKeyTakeawaysInput = z.infer<
@@ -57,7 +54,11 @@ const AnalyzeDocumentsInputSchema = z.object({
     filename: z.string(),
     content: z.string(),
   })),
-  webSources: z.array(z.string()).optional(),
+  webSearchResults: z.array(z.object({
+    title: z.string(),
+    link: z.string(),
+    snippet: z.string(),
+  })).optional(),
 });
 
 
@@ -83,6 +84,23 @@ const extractTextFromDocument = ai.defineTool({
   return `MOCK EXTRACTED TEXT FROM ${input.dataUri.substring(0, 50)}...`;
 });
 
+const searchWebTool = ai.defineTool(
+    {
+        name: 'searchWeb',
+        description: 'Searches the web for the given query.',
+        inputSchema: z.string(),
+        outputSchema: z.array(z.object({
+            title: z.string(),
+            link: z.string(),
+            snippet: z.string(),
+        })),
+    },
+    async (query) => {
+        return await searchWeb(query);
+    }
+);
+
+
 const analyzeDocumentsPrompt = ai.definePrompt({
   name: 'analyzeDocumentsPrompt',
   input: {schema: AnalyzeDocumentsInputSchema},
@@ -97,18 +115,20 @@ const analyzeDocumentsPrompt = ai.definePrompt({
       Content: {{{this.content}}}
   {{/each}}
 
-  Web Sources:
-  {{#if webSources}}
-    {{#each webSources}}
-      - {{this}}
+  Web Search Results:
+  {{#if webSearchResults}}
+    {{#each webSearchResults}}
+      - Title: {{this.title}}
+        Link: {{this.link}}
+        Snippet: {{{this.snippet}}}
     {{/each}}
   {{else}}
-    No web sources provided.
+    No web search results provided.
   {{/if}}
 
-  Based on the provided documents and web sources, please perform the following tasks:
+  Based on the provided documents and web search results, please perform the following tasks:
 
-  1. **Generate a detailed summary:** The summary should be comprehensive, well-structured, and easy to read. Use multiple paragraphs to organize the information logically. Start with an introduction, followed by the main findings, and conclude with a brief wrap-up.
+  1. **Generate a detailed summary:** The summary should be comprehensive, well-structured, and easy to read. Use multiple paragraphs to organize the information logically. Start with an introduction, followed by the main findings, and conclude with a brief wrap-up. Synthesize information from all sources.
 
   2. **Extract key takeaways:** Identify the most important insights and list them as clear and concise points.
 
@@ -129,6 +149,7 @@ const generateKeyTakeawaysFlow = ai.defineFlow(
     name: 'generateKeyTakeawaysFlow',
     inputSchema: GenerateKeyTakeawaysInputSchema,
     outputSchema: GenerateKeyTakeawaysOutputSchema,
+    tools: [searchWebTool]
   },
   async input => {
     // Step 1: Extract text from all documents in parallel.
@@ -141,12 +162,16 @@ const generateKeyTakeawaysFlow = ai.defineFlow(
         };
       })
     );
+    
+    // Step 2: Search the web for the research question.
+    const webSearchResults = await searchWebTool(input.question);
 
-    // Step 2: Call the prompt with the extracted text.
+
+    // Step 3: Call the prompt with the extracted text and web search results.
     const {output} = await analyzeDocumentsPrompt({
       question: input.question,
       documents: extractedDocuments,
-      webSources: input.webSources,
+      webSearchResults: webSearchResults,
     });
     return output!;
   }

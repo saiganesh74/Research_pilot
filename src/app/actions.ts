@@ -26,13 +26,16 @@ export async function handleResearchRequest(
   try {
     const question = formData.get('question') as string;
     const files = formData.getAll('files') as File[];
+    const webSources = formData.getAll('webSources') as string[];
 
     if (!question || question.length < 10) {
       return { error: 'Please provide a more detailed research question.' };
     }
-    if (files.length === 0) {
-      return { error: 'Please upload at least one document.' };
-    }
+    
+    // Documents are now optional if web search is enabled.
+    // if (files.length === 0) {
+    //   return { error: 'Please upload at least one document.' };
+    // }
 
     const documents: GenerateKeyTakeawaysInput['documents'] = [];
 
