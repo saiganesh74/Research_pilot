@@ -31,15 +31,19 @@ export async function handleResearchRequest(
     if (!question || question.length < 10) {
       return { error: 'Please provide a more detailed research question.' };
     }
-    
+
     // Documents are now optional if web search is enabled.
-    // if (files.length === 0) {
-    //   return { error: 'Please upload at least one document.' };
-    // }
+    if (files.length === 0 && webSources.length === 0) {
+      // If you want to enforce at least one, you can add an error here.
+      // For now, we allow it, relying on web search.
+    }
 
     const documents: GenerateKeyTakeawaysInput['documents'] = [];
 
     for (const file of files) {
+      // Skip empty file inputs from the client
+      if (!file.size) continue;
+      
       if (file.size > MAX_FILE_SIZE) {
         return { error: `File "${file.name}" exceeds the 20MB size limit.` };
       }

@@ -28,13 +28,13 @@ const formSchema = z.object({
   }),
   files: z
     .array(z.instanceof(File))
-    .min(1, 'Please upload at least one PDF document.')
+    .optional() // Files are optional
     .refine(
-      (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
+      (files) => !files || files.every((file) => file.size <= MAX_FILE_SIZE),
       `Each file must be 20MB or less.`
     )
     .refine(
-      (files) => files.every((file) => ALLOWED_FILE_TYPES.includes(file.type)),
+      (files) => !files || files.every((file) => ALLOWED_FILE_TYPES.includes(file.type)),
       'Only .pdf files are allowed.'
     ),
 });
@@ -42,7 +42,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface ResearchFormProps {
-  onSubmit: (data: FormValues) => void;
+  onSubmit: (data: { question: string; files: File[] }) => void;
   isLoading: boolean;
 }
 
@@ -58,17 +58,25 @@ export default function ResearchForm({ onSubmit, isLoading }: ResearchFormProps)
   const { control, watch, setValue } = form;
   const files = watch('files');
 
+  // Wrapper to handle optional files for the final submission
+  const handleFormSubmit = (data: FormValues) => {
+    onSubmit({
+      question: data.question,
+      files: data.files || [],
+    });
+  };
+
   return (
     <Card className="border-2 border-accent/20 shadow-lg shadow-accent/5">
       <CardHeader>
         <CardTitle className="font-headline text-3xl">Start Your Research</CardTitle>
         <CardDescription className="text-lg">
-          Submit your question and upload relevant documents to generate your report.
+          Submit your question and optionally upload documents to generate your report.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
             <FormField
               control={control}
               name="question"
@@ -93,7 +101,7 @@ export default function ResearchForm({ onSubmit, isLoading }: ResearchFormProps)
               name="files"
               render={() => (
                 <FormItem>
-                  <FormLabel className="text-xl font-headline">Upload Documents</FormLabel>
+                  <FormLabel className="text-xl font-headline">Upload Documents (Optional)</FormLabel>
                   <FormControl>
                     <Controller
                       control={control}
@@ -169,7 +177,7 @@ export default function ResearchForm({ onSubmit, isLoading }: ResearchFormProps)
               type="submit"
               disabled={isLoading}
               size="lg"
-              className="w-full text-lg bg-accent text-accent-foreground hover:bg-accent/90"
+              className="w-full text-lg bg-accent text-accent-foreground hover:bg-accent/90 transform hover:scale-105 transition-transform duration-200"
             >
               {isLoading ? (
                 <>
