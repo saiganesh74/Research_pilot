@@ -40,7 +40,7 @@ const GenerateKeyTakeawaysOutputSchema = z.object({
   keyTakeaways: z
     .array(z.string())
     .describe('A list of key takeaways extracted from the documents and web sources.'),
-  summary: z.string().describe('A concise summary of the findings.'),
+  summary: z.string().describe('A detailed and readable summary of the findings, structured with paragraphs for clarity.'),
   sources: z
     .array(z.string())
     .describe('A list of source links used for the report generation.'),
@@ -106,7 +106,13 @@ const analyzeDocumentsPrompt = ai.definePrompt({
     No web sources provided.
   {{/if}}
 
-  Generate a list of key takeaways, a concise summary of the findings, and a list of source links used for the report generation.
+  Based on the provided documents and web sources, please perform the following tasks:
+
+  1. **Generate a detailed summary:** The summary should be comprehensive, well-structured, and easy to read. Use multiple paragraphs to organize the information logically. Start with an introduction, followed by the main findings, and conclude with a brief wrap-up.
+
+  2. **Extract key takeaways:** Identify the most important insights and list them as clear and concise points.
+
+  3. **List all sources:** Compile a list of all document filenames and web source URLs that were used to generate the report.
 
   Please provide the output in JSON format.
   `,
