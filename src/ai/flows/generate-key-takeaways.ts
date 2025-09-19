@@ -50,6 +50,17 @@ export type GenerateKeyTakeawaysOutput = z.infer<
   typeof GenerateKeyTakeawaysOutputSchema
 >;
 
+// This is an internal schema, not exported.
+const AnalyzeDocumentsInputSchema = z.object({
+  question: z.string(),
+  documents: z.array(z.object({
+    filename: z.string(),
+    content: z.string(),
+  })),
+  webSources: z.array(z.string()).optional(),
+});
+
+
 const extractTextFromDocument = ai.defineTool({
   name: 'extractTextFromDocument',
   description: 'Extracts text content from a document provided as a data URI.',
@@ -69,14 +80,13 @@ const extractTextFromDocument = ai.defineTool({
   //
   // For simplicity, we are _mocking_ the result
   console.log('MOCK: Extracting text from document', input.dataUri);
-  return `MOCK EXTRACTED TEXT FROM ${input.dataUri}`;
+  return `MOCK EXTRACTED TEXT FROM ${input.dataUri.substring(0, 50)}...`;
 });
 
 const analyzeDocumentsPrompt = ai.definePrompt({
   name: 'analyzeDocumentsPrompt',
-  input: {schema: GenerateKeyTakeawaysInputSchema},
+  input: {schema: AnalyzeDocumentsInputSchema},
   output: {schema: GenerateKeyTakeawaysOutputSchema},
-  tools: [extractTextFromDocument],
   prompt: `You are a research assistant tasked with analyzing documents and web sources to answer a research question.
 
   Research Question: {{{question}}}
@@ -84,7 +94,7 @@ const analyzeDocumentsPrompt = ai.definePrompt({
   Documents:
   {{#each documents}}
     - Filename: {{this.filename}}
-      Content: {{extractTextFromDocument dataUri=this.dataUri}}
+      Content: {{{this.content}}}
   {{/each}}
 
   Web Sources:
@@ -115,7 +125,23 @@ const generateKeyTakeawaysFlow = ai.defineFlow(
     outputSchema: GenerateKeyTakeawaysOutputSchema,
   },
   async input => {
-    const {output} = await analyzeDocumentsPrompt(input);
+    // Step 1: Extract text from all documents in parallel.
+    const extractedDocuments = await Promise.all(
+      input.documents.map(async (doc) => {
+        const content = await extractTextFromDocument({ dataUri: doc.dataUri });
+        return {
+          filename: doc.filename,
+          content: content,
+        };
+      })
+    );
+
+    // Step 2: Call the prompt with the extracted text.
+    const {output} = await analyzeDocumentsPrompt({
+      question: input.question,
+      documents: extractedDocuments,
+      webSources: input.webSources,
+    });
     return output!;
   }
 );
