@@ -18,24 +18,21 @@ export async function searchWeb(query: string) {
     ];
   }
 
+  const search = new (await import('google-search-results-nodejs')).GoogleSearch(apiKey);
+
   return new Promise((resolve, reject) => {
-    getJson(
-      {
-        engine: "google",
-        q: query,
-        api_key: apiKey,
-      },
-      (json) => {
-        if (json.error) {
-          return reject(new Error(json.error));
-        }
-        const results = (json.organic_results || []).map((item: any) => ({
-          title: item.title,
-          link: item.link,
-          snippet: item.snippet,
-        }));
-        resolve(results.slice(0, 5)); // Return top 5 results
+    const callback = function (data: any) {
+      if (data.error) {
+        return reject(new Error(data.error));
       }
-    );
+      const results = (data.organic_results || []).map((item: any) => ({
+        title: item.title,
+        link: item.link,
+        snippet: item.snippet,
+      }));
+      resolve(results.slice(0, 5)); // Return top 5 results
+    };
+
+    search.json({ q: query, engine: 'google' }, callback);
   });
 }
