@@ -82,7 +82,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground dark">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header credits={credits} />
       <main className="flex-grow w-full max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="space-y-12">

@@ -1,5 +1,6 @@
 import { Logo } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface HeaderProps {
   credits: number;
@@ -22,6 +23,7 @@ export default function Header({ credits }: HeaderProps) {
             <span className="text-muted-foreground mr-2">Credits Used:</span>
             <span className="font-semibold text-accent">{credits}</span>
           </Badge>
+          <ThemeToggle />
         </div>
       </div>
     </header>

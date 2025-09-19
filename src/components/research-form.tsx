@@ -67,9 +67,9 @@ export default function ResearchForm({ onSubmit, isLoading }: ResearchFormProps)
   };
 
   return (
-    <Card className="border-2 border-accent/20 shadow-lg shadow-accent/5">
+    <Card className="border-2 border-primary/20 shadow-lg shadow-primary/5">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">Start Your Research</CardTitle>
+        <CardTitle className="font-headline text-3xl text-primary">Start Your Research</CardTitle>
         <CardDescription className="text-lg">
           Submit your question and optionally upload documents to generate your report.
         </CardDescription>
@@ -177,7 +177,11 @@ export default function ResearchForm({ onSubmit, isLoading }: ResearchFormProps)
               type="submit"
               disabled={isLoading}
               size="lg"
-              className="w-full text-lg bg-accent text-accent-foreground hover:bg-accent/90 transform hover:scale-105 transition-transform duration-200"
+              className={cn(
+                "w-full text-lg bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-300 ease-in-out",
+                "hover:shadow-lg hover:shadow-accent/50 hover:scale-105",
+                isLoading && "animate-[pulse-glow_2s_ease-in-out_infinite]"
+              )}
             >
               {isLoading ? (
                 <>
