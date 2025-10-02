@@ -47,6 +47,9 @@ cd Research_pilot
 4. Setup ENV folder
   ```env
   touch .env
+  GEMINI_API_KEY= YOUR_API_KEY
+  SERPAPI_KEY= YOUR_SERP_API_KEY
+
   ```
 ## Contributing
 
@@ -67,4 +70,5 @@ For feedback or questions:
 ganeshrejeti1@gmail.com
 
 GitHub: saiganesh74
+
 
