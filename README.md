@@ -1,4 +1,4 @@
-# Research Pilot  
+# Research Pilot- An Interactive Web-Based Application for Research Assistance
 
 A pilot research application built with Next.js & TypeScript. View [Live](https://research-pilot.netlify.app/)
 
@@ -70,6 +70,7 @@ For feedback or questions:
 ganeshrejeti1@gmail.com
 
 GitHub: saiganesh74
+
 
 
 
